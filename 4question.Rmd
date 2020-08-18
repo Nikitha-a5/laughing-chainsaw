@@ -1,0 +1,41 @@
+
+```{r}
+monet <- read.csv("TableF4-1.csv")
+monet$lprice <- log(monet$PRICE)
+monet$larea <- log(monet$HEIGHT*monet$WIDTH)
+monet$aspectratio <- monet$WIDTH/monet$HEIGHT
+#4a
+monetmod <- lm(lprice~larea+aspectratio,monet)
+summary(monetmod)
+#4b
+round(coeftest(monetmod, vcov=vcovHC(monetmod, "HC0")), 3)
+```
+
+Call:
+lm(formula = lprice ~ larea + aspectratio, data = monet)
+
+Residuals:
+    Min      1Q  Median      3Q     Max 
+-4.4967 -0.7201 -0.0845  0.7548  3.0073 
+
+Coefficients:
+            Estimate Std. Error t value Pr(>|t|)    
+(Intercept) -8.34236    0.67820  -12.30   <2e-16 ***
+larea        1.31638    0.09205   14.30   <2e-16 ***
+aspectratio -0.09623    0.15784   -0.61    0.542    
+---
+Signif. codes:  0 ‘***’ 0.001 ‘**’ 0.01 ‘*’ 0.05 ‘.’ 0.1 ‘ ’ 1
+
+Residual standard error: 1.104 on 427 degrees of freedom
+Multiple R-squared:  0.3342,	Adjusted R-squared:  0.3311 
+F-statistic: 107.2 on 2 and 427 DF,  p-value: < 2.2e-16
+
+
+t test of coefficients:
+
+            Estimate Std. Error t value Pr(>|t|)    
+(Intercept)   -8.342      0.733 -11.375   <2e-16 ***
+larea          1.316      0.106  12.421   <2e-16 ***
+aspectratio   -0.096      0.167  -0.576    0.565    
+---
+Signif. codes:  0 ‘***’ 0.001 ‘**’ 0.01 ‘*’ 0.05 ‘.’ 0.1 ‘ ’ 1

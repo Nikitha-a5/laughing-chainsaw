@@ -1,0 +1,22 @@
+```{r LSAT}
+load("lawsch85.RData")
+law <- lm(lsalary~ LSAT + GPA + llibvol + lcost + rank,data)
+n = nrow(data)
+(summary(law)$sigma)^2
+#bootstrapping
+S = 1000
+v = matrix(0,nrow = S,ncol =1)
+v2 = matrix(0,nrow = S,ncol =1)
+for (s in (1:S)) {
+  I = sample(1:n,n,replace = T)
+  mod_OLS1 = lm(lsalary~ LSAT + GPA + llibvol + lcost + rank,data = data[I,])
+  v[s] <- summary(mod_OLS1)$sigma
+  v2[s] <- summary(mod_OLS1)$sigma^2
+}
+var(v)
+var(v2)
+quantile(v,c(.025,.975))
+quantile(v2,c(.025,.975))
+
+```
+

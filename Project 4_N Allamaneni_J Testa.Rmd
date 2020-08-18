@@ -1,0 +1,45 @@
+```{r Project 4_N Allamaneni_J Testa, echo=TRUE}
+rm(list = ls())
+
+crimes <- readLines("R Walkthrough/crime.txt")
+
+#spliting and delecting first 3 rows
+crimes <- strsplit(crimes,"\\\n")[-c(1:3)]
+titles <- strsplit(crimes[[3]],",")[[1]]
+
+#dataframe
+Crimerate <- data.frame(matrix(rep(NA),ncol = 20))
+names(Crimerate) <- c(titles[1:20])
+
+crimes <- gsub("Estimated crime in ","",crimes)
+crimes <- crimes[-(grep("Year.*?Motor vehicle theft rate,",crimes))]
+State <- crimes[(grep("[A-Z]",crimes)[1:51])]
+
+crimes <- crimes[-(grep("[A-Z]",crimes))]
+crimes <- strsplit(crimes,",")
+
+for (i in 1:length(crimes)) {
+  if (length(crimes[[i]]) == 20) {
+    Crimerate[i,1:20] <- crimes[[i]]
+  }
+}
+Crimerate <- na.omit(Crimerate)
+Year2012 <- grep("2012",Crimerate$Year)
+
+#updating states
+for (i in 1:length(Year2012)){
+   if (i > 1) {
+   
+      Crimerate$State[(Year2012[i-1]+1):Year2012[i]] = State[i]  
+   
+      }else{
+     
+     Crimerate$State[1:i] = State[i]
+  
+   }
+  
+}
+
+View(Crimerate)
+```
+

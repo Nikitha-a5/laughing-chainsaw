@@ -1,0 +1,61 @@
+---
+title: "ps11"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+rm(list = ls())
+load("Car.RData")
+library(AER)
+library(gmnl)
+library(mlogit)
+```
+
+
+
+```{r cars}
+#question 1
+#a
+length(unique(data$situation))
+
+#b
+dataRUM = mlogit.data(data,id="person",chid.var="situation",choice="choice",
+                      alt.levels = c("o1","o2","o3"),shape = "long")
+
+modMNL = gmnl(choice ~ price+cost+range+electric+hybrid+medperf+highperf | 0,
+              data = dataRUM,model="mnl")
+summary(modMNL)
+qt(.05/2,1484-6,lower.tail = F)
+
+WTP = data.frame("WTP"= modMNL$coefficients/-modMNL$coefficients['price'])
+
+#m
+choice = function(x,b){
+  u = exp(x%*%b)
+  return(u/sum(u))
+}
+hvm = rbind(c(0,0,2,1,0,1,0),c(0,0,0,0,1,0,1))
+u <- rbind(c(30.05,45.05,0,0,1,1,1),c(48.05,30.12,2,1,0,0,1))
+b = modMNL$coefficients
+choice(hvm,b)
+choice(u,b)
+```
+
+```{r}
+modLC = gmnl( choice ~ price+cost+range+electric+hybrid+medperf+highperf | 0 | 0 | 0 | 1 ,
+                data = dataRUM ,model = "lc" ,Q =2 ,panel = TRUE )
+summary(modLC)
+pr1 = as.numeric(1/(1+exp(modLC$coefficients['(class)2'])))
+pr2 = 1 - pr1
+choice = function(x,b){
+  u = exp(x%*%b)
+  return(u/sum(u))
+}
+coeff2 <- as.vector(modLC$coefficients[8:14])
+coeff1 <- as.vector(modLC$coefficients[1:7])
+u2 <- rbind(c(29.05,40,0,0,0,0,0),c(47.26,22,0,0,1,1,0))
+choice(u2,coeff2)
+choice(u2,coeff1)
+```
+

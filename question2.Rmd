@@ -1,0 +1,22 @@
+```{r}
+load(file = "lawsch85.RData")
+data<-data %>%
+  select(salary,lsalary, LSAT, GPA, llibvol, lcost, rank)
+lawsch<-na.omit(data)
+#2a
+mod=lm(salary~LSAT+GPA+llibvol+lcost+rank,data = lawsch)
+summary(mod)
+
+modres=lm(mod$residuals~LSAT+GPA+llibvol+lcost+rank,data = lawsch)
+summary(modres)
+#2b
+bptest(mod)
+#2c
+mod1=lm(lsalary~LSAT+GPA+llibvol+lcost+rank,data = lawsch)
+summary(mod1)
+#2d
+bptest(mod1)
+coeftest(mod,vcov = vcovHC(mod,"HC1"))
+
+```
+

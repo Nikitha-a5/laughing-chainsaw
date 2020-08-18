@@ -1,0 +1,28 @@
+```{r}
+load(file = "cornwell.RData")
+mydata <- data[which(data$year == "87"),]
+mydata$lcrmrte86<- data$lcrmrte[data$year=="86"]
+#3a
+crm87mod <- lm(crmrte ~ lprbarr+lprbconv+lprbpris+lavgsen,data = data[data$year == "87",])
+summary(crm87mod)
+#3b
+crm8786mod <- lm(crmrte ~ lprbarr+lprbconv+lprbpris+lavgsen+lcrmrte86,data = mydata)
+summary(crm8786mod)
+#3c
+wagemod <- lm(crmrte ~ lprbarr+lprbconv+lprbpris+lavgsen+lcrmrte86+lwcon+lwfed+lwfir+lwloc+lwmfg+lwser+lwsta+lwtrd+lwtuc,data = mydata)
+summary(wagemod)
+suppressMessages(library("AER"))
+linearHypothesis(wagemod,c("lwcon=0","lwfed=0","lwfir=0", "lwloc=0", "lwmfg=0", "lwser=0", "lwsta=0", "lwtrd=0", "lwtuc=0"))
+#3d
+n2 = nobs(wagemod)
+X2 = as.matrix(cbind(rep(1,n2),mydata$lprbarr,mydata$lprbconv,mydata$lprbpris,mydata$lavgsen,mydata$lcrmrte,
+                     mydata$lwcon,mydata$lwfed,mydata$lwfir,mydata$lwloc,mydata$lwmfg,
+                     mydata$lwser,mydata$lwsta,mydata$lwtrd,mydata$lwtuc))
+XX2 = t(X2)%*%X2
+XXi2 = solve(t(X2)%*%X2)
+S2 = XXi2 %*% (t(X2)%*%(diag(wagemod$residuals^2))%*%X2)%*%XXi2
+S2 = (n2/wagemod$df.residual)*S2
+linearHypothesis(wagemod,c("lwcon=0","lwfed=0","lwfir=0", "lwloc=0", "lwmfg=0", "lwser=0", "lwsta=0", "lwtrd=0", "lwtuc=0"), vcov=S2)
+
+```
+

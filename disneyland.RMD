@@ -1,0 +1,80 @@
+```{r sem, echo=TRUE}
+rm(list = ls())
+Disneyland <- read.csv("R Walkthrough/StandbyHRLY.csv")
+library(sem)
+library(mvtnorm)
+library(tidyverse)
+ridenames = c("BigThunMtn","PeterPan","SpaceMtn","HauntedMansion")
+kp_rows <- rowSums(!is.na(Disneyland[,ridenames])) == 4
+D = Disneyland[kp_rows,]
+
+#SEM
+model_DL = specifyModel(text = "
+                        crowdsize -> BigThunMtn,NA,1
+                        crowdsize -> PeterPan,b2,NA
+                        crowdsize -> SpaceMtn,b3,NA
+                        crowdsize -> HauntedMansion,b4,NA
+                        crowdsize <-> crowdsize,var_crowd,1000
+                        ")
+
+sem.DL <- sem(model_DL,data = D[,ridenames])
+summary(sem.DL)
+sem.DL$coeff
+D$predCrowd = fscores(sem.DL,D)
+D[1:10,c('date','HR','predCrowd')]
+D[D$predCrowd == max(D$predCrowd),c('date','HR','predCrowd')]
+
+```
+
+```{r Optim&loglike, echo=TRUE}
+#a
+Y = cbind(D$BigThunMtn,D$PeterPan,D$SpaceMtn,D$HauntedMansion)
+J = ncol(Y)
+n = nrow(Y)
+
+vp <- function(theta){
+  a = theta[1:J]
+  var_u = exp(theta[J+(1:J)])
+  b = matrix(c(1,theta[(2*J) + (1 : (J-1))]),nrow = J,ncol = 1)
+  var_z = exp(theta[(2*J + (J-1)) + 1])
+  list(a=a,var_u = var_u,b=b,var_z = var_z)
+}
+
+loglikefun = function(theta){
+  parms = vp(theta)
+  SIGMA = (parms$b %*% parms$var_z %*% t(parms$b)) + diag(parms$var_u)
+  pr = dmvnorm(Y,mean = parms$a,sigma = SIGMA)
+  ll = sum(log(pr))
+  return(-ll)
+}
+
+sv = c(30,50,35,56,rep(c(log(1000),log(800)),2),.99,.99,.99,log(50))
+
+result <- optim(par = sv,loglikefun,method = "BFGS",control = list(maxit = 1e6))
+result$par
+```
+
+```{r pred Demand & max, echo=TRUE}
+#b&c
+predfun = function(theta){
+  parms = vp(theta)
+  E = matrix(0,nrow = n,ncol = 1)
+  V = matrix(parms$var_z,nrow = n,ncol = 1)
+  for (j in 1:J) {
+    y = (Y[,j] - parms$a[j])/parms$b[j]
+    var_noise = (1/parms$a[j])^2 * parms$var_u[j]
+    w = (1/V)/(1/V + 1/var_noise)
+    E = w*E + (1-w)*y
+    V = 1/(1/V + 1/var_noise)
+  }
+  list(E=E,V=V)
+}
+P= predfun(result$par)
+D$predDemand = P$E
+D[D$predDemand == max(D$predDemand),c('date','HR','predDemand')]
+Avg = D %>% group_by(date) %>% summarize(mean_size = mean(predDemand, na.rm = TRUE))
+Avg[Avg$mean_size == max(Avg$mean_size),]
+
+```
+
+
